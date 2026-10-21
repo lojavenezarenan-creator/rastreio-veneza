@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rastreie seu pedido | Loja Veneza</title>
+<meta name="description" content="Acompanhe a entrega do seu pedido da Loja Veneza com o CPF/CNPJ e o número da nota fiscal.">
+<meta property="og:title" content="Rastreie seu pedido | Loja Veneza">
+<meta property="og:description" content="Acompanhe a entrega do seu pedido com o CPF/CNPJ e o número da nota fiscal.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#1f4fa3">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f4fa3'/%3E%3Ctext x='32' y='44' font-family='Arial' font-size='36' font-weight='700' fill='white' text-anchor='middle'%3EV%3C/text%3E%3C/svg%3E">
 <style>
   :root{--bg:#f5f6f8;--card:#fff;--txt:#1d2330;--sub:#5b6475;--borda:#e3e6ec;--pri:#1f4fa3;--pri2:#163c7d;--ok:#1d7a46;--okbg:#e8f6ee;--no:#6b7280;--nobg:#f1f2f4;--err:#a33a1f;--errbg:#fbeeea}
   @media (prefers-color-scheme:dark){:root{--bg:#12151b;--card:#1b2029;--txt:#e9ecf2;--sub:#a3abba;--borda:#2b3240;--pri:#5b8ff0;--pri2:#7aa5f5;--ok:#5fd394;--okbg:#173325;--no:#9aa1ad;--nobg:#232833;--err:#f08a6b;--errbg:#3a2019}}
@@ -37,9 +43,19 @@
   .link{display:inline-block;margin-top:10px;font-size:.88rem;color:var(--pri)}
   .min{opacity:.75}
   footer{margin-top:28px;font-size:.8rem;color:var(--sub)}
+  .marca{background:var(--pri);color:#fff}
+  .marca div{max-width:760px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:10px;justify-content:space-between}
+  .logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:700;font-size:1.15rem;letter-spacing:.3px}
+  .logo span{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#fff;color:var(--pri);font-weight:800}
+  .seguro{font-size:.8rem;opacity:.9;display:flex;align-items:center;gap:6px}
+  footer a{color:var(--pri)}
 </style>
 </head>
 <body>
+<header class="marca"><div>
+  <a class="logo" href="https://lojaveneza.com.br" target="_blank" rel="noopener"><span>V</span>Loja Veneza</a>
+  <span class="seguro">&#128274; Consulta segura</span>
+</div></header>
 <main>
   <h1>Rastreie seu pedido</h1>
   <p class="sub">Informe o CPF ou CNPJ da compra e o número da nota fiscal. Procuramos nas transportadoras LDB, Movvi, Minuano e nas parceiras do sistema SSW.</p>
@@ -53,7 +69,7 @@
   <div id="msg" role="status" aria-live="polite"></div>
   <div id="res"></div>
 
-  <footer>As informações vêm diretamente dos sistemas das transportadoras e podem levar algumas horas para atualizar.</footer>
+  <footer>Página oficial de rastreio da <a href="https://lojaveneza.com.br" target="_blank" rel="noopener">Loja Veneza</a>. As informações vêm diretamente dos sistemas das transportadoras e podem levar algumas horas para atualizar. Não pedimos senhas nem pagamentos nesta página.</footer>
 </main>
 
 <script>
