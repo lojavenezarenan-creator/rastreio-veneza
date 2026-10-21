@@ -3,15 +3,20 @@
 // entregas daquele CPF (N.F. | Unidade | Situação). Filtramos pela NF informada para o
 // cliente ver só o pedido dele.
 const cheerio = require('cheerio');
-const { http, soDigitos, limpa } = require('./util');
+const { http, soDigitos, limpa, guardarCookies, cookieHeader } = require('./util');
 
 const URL_SSW = 'https://ssw.inf.br/tracking/ssw_destinatario';
 
 async function rastrear(doc, nf) {
+  // Abre a página antes (pega cookie de sessão, como um navegador faria)
+  const jar = {};
+  const r0 = await http(URL_SSW);
+  guardarCookies(r0, jar);
+  await r0.text();
   const res = await http(URL_SSW, {
     method: 'POST',
     body: new URLSearchParams({ InputCPF: soDigitos(doc) }).toString(),
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', Referer: URL_SSW, Origin: 'https://ssw.inf.br' },
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', Referer: URL_SSW, Origin: 'https://ssw.inf.br', Cookie: cookieHeader(jar) },
   });
   if (!res.ok) throw new Error(`SSW respondeu HTTP ${res.status}`);
   return interpretar(await res.text(), nf);
@@ -27,7 +32,7 @@ function interpretar(html, nf) {
 
   const linhas = [];
   $('table tr').each((_, tr) => {
-    const td = $(tr).children('td');
+    const td = $(tr).children('th,td');
     if (td.length < 3) return;
     const colNF = $(td[0]).text().split('\n').map(limpa).filter(Boolean);
     // A 1ª linha da coluna N.F. traz o número da nota (às vezes junto de outro número)
