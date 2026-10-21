@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rastreie seu pedido | Loja Veneza</title>
+<style>
+  :root{--bg:#f5f6f8;--card:#fff;--txt:#1d2330;--sub:#5b6475;--borda:#e3e6ec;--pri:#1f4fa3;--pri2:#163c7d;--ok:#1d7a46;--okbg:#e8f6ee;--no:#6b7280;--nobg:#f1f2f4;--err:#a33a1f;--errbg:#fbeeea}
+  @media (prefers-color-scheme:dark){:root{--bg:#12151b;--card:#1b2029;--txt:#e9ecf2;--sub:#a3abba;--borda:#2b3240;--pri:#5b8ff0;--pri2:#7aa5f5;--ok:#5fd394;--okbg:#173325;--no:#9aa1ad;--nobg:#232833;--err:#f08a6b;--errbg:#3a2019}}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);line-height:1.45}
+  main{max-width:760px;margin:0 auto;padding:32px 16px 64px}
+  h1{font-size:1.6rem;margin:0 0 4px}
+  .sub{color:var(--sub);margin:0 0 24px}
+  form{background:var(--card);border:1px solid var(--borda);border-radius:14px;padding:20px;display:grid;gap:14px;grid-template-columns:1fr 1fr auto;align-items:end}
+  label{display:block;font-size:.85rem;color:var(--sub);margin-bottom:6px}
+  input{width:100%;padding:12px;border:1px solid var(--borda);border-radius:10px;font-size:1rem;background:var(--bg);color:var(--txt)}
+  input:focus{outline:2px solid var(--pri);border-color:transparent}
+  button{padding:12px 22px;border:0;border-radius:10px;background:var(--pri);color:#fff;font-size:1rem;font-weight:600;cursor:pointer}
+  button:hover{background:var(--pri2)} button:disabled{opacity:.6;cursor:wait}
+  @media (max-width:620px){form{grid-template-columns:1fr}}
+  #msg{margin:18px 0;color:var(--sub)}
+  .card{background:var(--card);border:1px solid var(--borda);border-radius:14px;padding:18px;margin-top:14px}
+  .topo{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .topo h2{font-size:1.1rem;margin:0}
+  .tag{font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:99px}
+  .tag.encontrado{background:var(--okbg);color:var(--ok)}
+  .tag.nao_encontrado{background:var(--nobg);color:var(--no)}
+  .tag.erro{background:var(--errbg);color:var(--err)}
+  .info{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+  .tbl{overflow-x:auto;margin-top:16px}
+  .tbl h3{font-size:.95rem;margin:0 0 4px}
+  .resumo{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--okbg);color:var(--ok);font-weight:600}
+  table{border-collapse:collapse;width:100%;font-size:.9rem}
+  td,th{border-bottom:1px solid var(--borda);padding:8px 6px;text-align:left;vertical-align:top}
+  tr:first-child td{font-weight:600;color:var(--sub)}
+  .link{display:inline-block;margin-top:10px;font-size:.88rem;color:var(--pri)}
+  .min{opacity:.75}
+  footer{margin-top:28px;font-size:.8rem;color:var(--sub)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Rastreie seu pedido</h1>
+  <p class="sub">Informe o CPF ou CNPJ da compra e o número da nota fiscal. Procuramos nas transportadoras LDB, Movvi e Minuano.</p>
+
+  <form id="f" autocomplete="on">
+    <div><label for="doc">CPF ou CNPJ</label><input id="doc" name="doc" inputmode="numeric" required placeholder="000.000.000-00"></div>
+    <div><label for="nf">Nº da nota fiscal</label><input id="nf" name="nf" inputmode="numeric" required placeholder="Ex.: 123456"></div>
+    <button id="btn" type="submit">Rastrear</button>
+  </form>
+
+  <div id="msg" role="status" aria-live="polite"></div>
+  <div id="res"></div>
+
+  <footer>As informações vêm diretamente dos sistemas das transportadoras e podem levar algumas horas para atualizar.</footer>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const el = (tag, props = {}, ...filhos) => { const e = document.createElement(tag); Object.assign(e, props); filhos.forEach(f => f && e.append(f)); return e; };
+
+// Máscara CPF/CNPJ
+$('#doc').addEventListener('input', (e) => {
+  let d = e.target.value.replace(/\D/g, '').slice(0, 14);
+  e.target.value = d.length <= 11
+    ? d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    : d.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
+});
+$('#nf').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 12); });
+
+const ROTULO = { encontrado: 'Encontrado', nao_encontrado: 'Não encontrado', erro: 'Indisponível' };
+
+function cartao(r) {
+  const c = el('section', { className: 'card' + (r.status === 'encontrado' ? '' : ' min') });
+  c.append(el('div', { className: 'topo' }, el('h2', { textContent: r.nome }), el('span', { className: 'tag ' + r.status, textContent: ROTULO[r.status] })));
+
+  if (r.status === 'encontrado' && r.dados) {
+    const { textos = [], tabelas = [], resumo } = r.dados;
+    if (resumo) c.append(el('p', { className: 'resumo', textContent: resumo }));
+    if (textos.length) { const ul = el('ul', { className: 'info' }); textos.slice(0, 40).forEach(t => ul.append(el('li', { textContent: t }))); c.append(ul); }
+    tabelas.forEach(tb => {
+      const t = el('table');
+      tb.linhas.forEach(linha => { const tr = el('tr'); linha.forEach(v => tr.append(el('td', { textContent: v }))); t.append(tr); });
+      c.append(el('div', { className: 'tbl' }, tb.titulo ? el('h3', { textContent: tb.titulo }) : null, t));
+    });
+  } else if (r.status === 'erro') {
+    c.append(el('p', { textContent: r.mensagem }));
+  }
+  if (r.status !== 'nao_encontrado') c.append(el('a', { className: 'link', href: r.link, target: '_blank', rel: 'noopener', textContent: 'Abrir site da ' + r.nome + ' ↗' }));
+  return c;
+}
+
+async function buscar(doc, nf) {
+  $('#btn').disabled = true; $('#res').replaceChildren(); $('#msg').textContent = 'Consultando as transportadoras…';
+  try {
+    const resp = await fetch(`/api/rastreio?doc=${encodeURIComponent(doc)}&nf=${encodeURIComponent(nf)}`);
+    const j = await resp.json();
+    if (!resp.ok) { $('#msg').textContent = j.erro || 'Não foi possível consultar.'; return; }
+    const ordem = { encontrado: 0, erro: 1, nao_encontrado: 2 };
+    const lista = j.resultados.sort((a, b) => ordem[a.status] - ordem[b.status]);
+    const achou = lista.some(r => r.status === 'encontrado');
+    $('#msg').textContent = achou ? '' : 'Não encontramos esta nota fiscal. Confira os dados ou, se a nota foi emitida hoje, tente novamente mais tarde.';
+    lista.forEach(r => $('#res').append(cartao(r)));
+  } catch {
+    $('#msg').textContent = 'Falha de conexão. Tente novamente.';
+  } finally { $('#btn').disabled = false; }
+}
+
+$('#f').addEventListener('submit', (e) => { e.preventDefault(); buscar($('#doc').value, $('#nf').value); });
+
+// Permite links prontos: /?doc=...&nf=...
+const p = new URLSearchParams(location.search);
+if (p.get('doc') && p.get('nf')) { $('#doc').value = p.get('doc'); $('#doc').dispatchEvent(new Event('input')); $('#nf').value = p.get('nf'); buscar(p.get('doc'), p.get('nf')); }
+</script>
+</body>
+</html>

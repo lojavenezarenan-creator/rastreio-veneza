@@ -1,0 +1,18 @@
+{
+  "name": "rastreio-veneza",
+  "version": "1.0.0",
+  "description": "Rastreio unificado (LDB, Movvi, Minuano) para clientes da Loja Veneza",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo ok"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "express": "^4.21.2"
+  }
+}
