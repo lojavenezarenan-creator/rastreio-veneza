@@ -250,6 +250,8 @@ function infoItem(t) {
 
 // Não mostrar previsões (de chegada/entrega), só atualizações que já aconteceram
 const PREV = /previs|previst/i;
+// Eventos internos que não devem aparecer para o cliente
+const OCULTAR = /coleta solicitada/i;
 const semPrevisao = (t) => String(t || '').split(/(?<=\.)\s+/).filter(f => !PREV.test(f)).join(' ').trim();
 
 function cartaoResultado(r) {
@@ -258,6 +260,7 @@ function cartaoResultado(r) {
   const textos = (d.textos || []).filter(t => !PREV.test(t));
   const tabelas = (d.tabelas || []).map(tb => ({ ...tb, linhas: [tb.linhas[0], ...tb.linhas.slice(1)
     .filter(l => !l.some(c => PREV.test(c) && !/\.\s/.test(c)))
+    .filter(l => !l.some(c => OCULTAR.test(c)))
     .map(l => l.map(semPrevisao))] }));
   const ok = entregue(resumo);
   const topo = el('div', { className: 'res-topo' },
