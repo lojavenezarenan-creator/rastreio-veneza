@@ -248,8 +248,17 @@ function infoItem(t) {
   return m ? { r: m[1], v: m[2].replace(/\s·\s\d{11,14}(?=\s·|$)/g, '') } : { r: '', v: t };
 }
 
+// Não mostrar previsões (de chegada/entrega), só atualizações que já aconteceram
+const PREV = /previs|previst/i;
+const semPrevisao = (t) => String(t || '').split(/(?<=\.)\s+/).filter(f => !PREV.test(f)).join(' ').trim();
+
 function cartaoResultado(r) {
-  const { textos = [], tabelas = [], resumo } = r.dados || {};
+  const d = r.dados || {};
+  const resumo = semPrevisao(d.resumo);
+  const textos = (d.textos || []).filter(t => !PREV.test(t));
+  const tabelas = (d.tabelas || []).map(tb => ({ ...tb, linhas: [tb.linhas[0], ...tb.linhas.slice(1)
+    .filter(l => !l.some(c => PREV.test(c) && !/\.\s/.test(c)))
+    .map(l => l.map(semPrevisao))] }));
   const ok = entregue(resumo);
   const topo = el('div', { className: 'res-topo' },
     el('div', { className: 'ic' + (ok ? '' : ' andamento') }, svg(ok ? IC.ok : IC.caminhao)),
