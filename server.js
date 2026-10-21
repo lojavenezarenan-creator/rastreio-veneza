@@ -6,6 +6,7 @@ const TRANSPORTADORAS = [
   require('./ldb'),
   require('./movvi'),
   require('./minuano'),
+  require('./ssw'),
 ];
 
 const app = express();
