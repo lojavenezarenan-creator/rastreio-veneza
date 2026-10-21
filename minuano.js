@@ -39,6 +39,10 @@ function interpretar(html) {
 
   // Organiza "Remetente FULANO ..." em "Remetente: FULANO ..."
   dados.textos = dados.textos.map((t) => t.replace(/^(Remetente|Destinatário)\s*(·\s*)?/i, '$1: '));
+  // O site da Minuano às vezes gruda palavras: "PORTO ALEGREem 19/10" -> "PORTO ALEGRE em 19/10"
+  const desgruda = (t) => t.replace(/([A-ZÀ-Ú]{2,})(em|às)(?=\s)/g, '$1 $2');
+  dados.tabelas = dados.tabelas.map((tb) => ({ ...tb, linhas: tb.linhas.map((l) => l.map(desgruda)) }));
+  dados.textos = dados.textos.map(desgruda);
   return dados;
 }
 
