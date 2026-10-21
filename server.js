@@ -11,6 +11,23 @@ const TRANSPORTADORAS = [
 
 const app = express();
 app.set('trust proxy', 1);
+// Modo privado (testes): se a variável SENHA_ACESSO existir no Render, o site pede
+// usuário/senha (qualquer usuário + essa senha). Para liberar ao público, apague a variável.
+const crypto = require('crypto');
+const SENHA = process.env.SENHA_ACESSO;
+if (SENHA) {
+  const hash = (s) => crypto.createHash('sha256').update(String(s)).digest();
+  app.use((req, res, next) => {
+    if (req.path === '/saude') return next();
+    const [tipo, valor] = (req.headers.authorization || '').split(' ');
+    if (tipo === 'Basic' && valor) {
+      const senha = Buffer.from(valor, 'base64').toString().split(':').slice(1).join(':');
+      if (crypto.timingSafeEqual(hash(senha), hash(SENHA))) return next();
+    }
+    res.set('WWW-Authenticate', 'Basic realm="Rastreio Loja Veneza (em testes)", charset="UTF-8"');
+    res.status(401).send('Acesso restrito: página em testes.');
+  });
+}
 app.get('/', (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // Limite simples: 20 consultas por minuto por IP (protege as transportadoras e o servidor)
