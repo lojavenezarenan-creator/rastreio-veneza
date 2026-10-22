@@ -6,8 +6,19 @@ const cheerio = require('cheerio');
 const { http, soDigitos, limpa, guardarCookies, cookieHeader } = require('./util');
 
 const URL_SSW = 'https://ssw.inf.br/tracking/ssw_destinatario';
+// Consulta pelo remetente (CNPJ da loja + NF): ssw.inf.br/2/rastreamento
+const URL_REMETENTE = 'https://ssw.inf.br/2/resultSSW';
 
 async function rastrear(doc, nf) {
+  if (soDigitos(doc).length === 14) {
+    const r = await http(URL_REMETENTE, {
+      method: 'POST',
+      body: new URLSearchParams({ cnpj: soDigitos(doc), NR: soDigitos(nf), chave: '' }).toString(),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Referer: 'https://ssw.inf.br/2/rastreamento', Origin: 'https://ssw.inf.br' },
+    });
+    if (!r.ok) throw new Error(`SSW respondeu HTTP ${r.status}`);
+    return interpretar(await r.text(), nf);
+  }
   // Abre a página antes (pega cookie de sessão, como um navegador faria)
   const jar = {};
   const r0 = await http(URL_SSW);
@@ -39,11 +50,13 @@ function interpretar(html, nf) {
     const tokens = (colNF[0] || '').split(' ');
     if (!tokens.some((t) => mesmoNumero(t, nf))) return;
 
-    const unidade = $(td[1]).text().split('\n').map(limpa).filter(Boolean);
-    let situacao = limpa($(td[2]).text())
+    // Últimas colunas: "Unidade / data" e "Situação" (mesmo layout nas duas consultas do SSW)
+    const unidade = $(td[td.length - 2]).text().split('\n').map(limpa).filter(Boolean);
+    let situacao = limpa($(td[td.length - 1]).text())
       .replace(/Mais detalhes/gi, '')
       .replace(/CO2 emitido[^.]*\.\s*/gi, '')
       .trim();
+    if (!situacao || /informa[çc][ãa]o n[ãa]o dispon/i.test(situacao + unidade.join(' '))) return;
     linhas.push({ unidade, situacao });
   });
 

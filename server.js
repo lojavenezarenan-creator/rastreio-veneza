@@ -46,29 +46,44 @@ setInterval(() => acessos.clear(), 10 * 60_000).unref();
 const cache = new Map();
 const CACHE_MS = 5 * 60_000;
 
+// CNPJ(s) da loja usados como remetente: o cliente só precisa informar a nota fiscal.
+// Para mais de um CNPJ (ex.: Loja do Modulado), defina LOJA_CNPJS no Render separado por vírgula.
+const LOJA_CNPJS = (process.env.LOJA_CNPJS || '32386240000162').split(',').map(soDigitos).filter((d) => d.length === 14);
+
+// Dados pessoais não aparecem quando a consulta é só pela nota
+const semDadosPessoais = (r) => {
+  if (!r.dados) return r;
+  const textos = (r.dados.textos || []).filter((t) => !/^(remetente|destinat[áa]rio)\b/i.test(t));
+  return { ...r, dados: { ...r.dados, textos } };
+};
+
 app.get('/api/rastreio', limitar, async (req, res) => {
-  const doc = soDigitos(req.query.doc);
   const nf = soDigitos(req.query.nf);
-  if (![11, 14].includes(doc.length)) return res.status(400).json({ erro: 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).' });
   if (!nf || nf.length > 12) return res.status(400).json({ erro: 'Informe o número da nota fiscal.' });
 
-  const chave = `${doc}:${nf}`;
+  const chave = `loja:${nf}`;
   const emCache = cache.get(chave);
   if (emCache && Date.now() - emCache.em < CACHE_MS) return res.json(emCache.dados);
 
   const resultados = await Promise.all(
     TRANSPORTADORAS.map(async (t) => {
       const base = { id: t.id, nome: t.nome, link: t.link };
-      try {
-        return { ...base, ...(await t.rastrear(doc, nf)) };
-      } catch (e) {
-        console.error(`[${t.id}]`, e.message);
-        return { ...base, status: 'erro', mensagem: 'Não foi possível consultar esta transportadora agora.' };
+      let ultimo = { status: 'nao_encontrado' };
+      for (const doc of LOJA_CNPJS) {
+        try {
+          const r = await t.rastrear(doc, nf);
+          if (r.status === 'encontrado') return semDadosPessoais({ ...base, ...r });
+          ultimo = r;
+        } catch (e) {
+          console.error(`[${t.id}]`, e.message);
+          ultimo = { status: 'erro', mensagem: 'Não foi possível consultar esta transportadora agora.' };
+        }
       }
+      return { ...base, ...ultimo };
     })
   );
 
-  const dados = { doc, nf, consultadoEm: new Date().toISOString(), resultados };
+  const dados = { nf, consultadoEm: new Date().toISOString(), resultados };
   cache.set(chave, { em: Date.now(), dados });
   res.json(dados);
 });

@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rastreie seu pedido | Loja Veneza e Loja do Modulado</title>
-<meta name="description" content="Acompanhe a entrega do seu pedido da Loja Veneza e da Loja do Modulado com o CPF/CNPJ e o número da nota fiscal.">
+<meta name="description" content="Acompanhe a entrega do seu pedido da Loja Veneza e da Loja do Modulado com o número da nota fiscal.">
 <meta property="og:title" content="Rastreie seu pedido | Loja Veneza">
-<meta property="og:description" content="Acompanhe a entrega do seu pedido com o CPF/CNPJ e o número da nota fiscal.">
+<meta property="og:description" content="Acompanhe a entrega do seu pedido com o número da nota fiscal.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#6022ab">
 <meta name="color-scheme" content="light">
@@ -49,7 +49,7 @@
   /* Busca */
   .busca{margin-top:-84px;position:relative;z-index:2}
   .card{background:var(--card);border:1px solid var(--borda);border-radius:var(--raio);box-shadow:var(--sombra)}
-  form.card{padding:24px;display:grid;gap:16px;grid-template-columns:1fr 1fr auto;align-items:end}
+  form.card{padding:24px;display:grid;gap:16px;grid-template-columns:1fr auto;align-items:end}
   label{display:block;font-size:.85rem;font-weight:600;color:var(--sub);margin-bottom:7px}
   .campo{position:relative}
   .campo svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:#9a8fb0;pointer-events:none}
@@ -146,19 +146,12 @@
 <section class="hero"><div class="wrap">
   <span class="selo">&#128274; Página oficial de rastreio</span>
   <h1>Acompanhe a entrega<br>do seu <span>pedido</span></h1>
-  <p>Informe o CPF ou CNPJ usado na compra e o número da nota fiscal. A gente procura nas transportadoras parceiras para você.</p>
+  <p>Basta informar o número da nota fiscal do seu pedido. Nós procuramos nas transportadoras parceiras para você.</p>
 </div></section>
 
 <main class="wrap">
   <div class="busca">
     <form id="f" class="card" autocomplete="on">
-      <div>
-        <label for="doc">CPF ou CNPJ</label>
-        <div class="campo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-          <input id="doc" name="doc" inputmode="numeric" required placeholder="000.000.000-00">
-        </div>
-      </div>
       <div>
         <label for="nf">Número da nota fiscal</label>
         <div class="campo">
@@ -177,7 +170,7 @@
   <section class="secao" id="como">
     <h2>Como funciona</h2>
     <div class="passos">
-      <div class="card passo"><div class="n">1</div><h3>Informe seus dados</h3><p>Digite o CPF/CNPJ da compra e o número da nota fiscal.</p></div>
+      <div class="card passo"><div class="n">1</div><h3>Informe a nota fiscal</h3><p>Digite apenas o número da nota fiscal do seu pedido.</p></div>
       <div class="card passo"><div class="n">2</div><h3>Buscamos para você</h3><p>Consultamos ao mesmo tempo todas as transportadoras parceiras.</p></div>
       <div class="card passo"><div class="n">3</div><h3>Acompanhe a entrega</h3><p>Veja a situação atual e o histórico completo do seu pedido.</p></div>
     </div>
@@ -185,7 +178,7 @@
 
   <section class="secao">
     <h2>Dúvidas frequentes</h2>
-    <details class="card"><summary>Não encontrei meu pedido. O que fazer?</summary><p>Confira se o CPF/CNPJ e o número da nota estão corretos. Se a nota foi emitida há pouco tempo, a transportadora pode levar até 1 dia útil para registrar a coleta. Tente novamente mais tarde.</p></details>
+    <details class="card"><summary>Não encontrei meu pedido. O que fazer?</summary><p>Confira se o número da nota está correto (somente números). Se a nota foi emitida há pouco tempo, a transportadora pode levar até 1 dia útil para registrar a coleta. Tente novamente mais tarde.</p></details>
     <details class="card"><summary>Onde encontro o número da nota fiscal?</summary><p>Ele está no e-mail enviado quando o pedido foi faturado e na nota fiscal (DANFE) que acompanha a mercadoria. Use apenas os números.</p></details>
     <details class="card"><summary>As informações são atualizadas em tempo real?</summary><p>Os dados vêm diretamente dos sistemas das transportadoras e são atualizados conforme elas registram cada etapa da entrega.</p></details>
     <details class="card"><summary>Esta página é segura?</summary><p>Sim. É a página oficial de rastreio da Loja Veneza e da Loja do Modulado. Nunca pedimos senhas, dados de cartão ou pagamentos aqui.</p></details>
@@ -215,12 +208,6 @@ const IC = {
 };
 
 // Máscaras
-$('#doc').addEventListener('input', (e) => {
-  let d = e.target.value.replace(/\D/g, '').slice(0, 14);
-  e.target.value = d.length <= 11
-    ? d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-    : d.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
-});
 $('#nf').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 12); });
 
 const NOMES = { ldb: 'LDB', movvi: 'Movvi', minuano: 'Minuano', ssw: 'SSW' };
@@ -296,11 +283,11 @@ function carregando(on) {
     el('div', { className: 'chips' }, Object.values(NOMES).map(n => el('span', { className: 'chip', textContent: n })))));
 }
 
-async function buscar(doc, nf) {
+async function buscar(nf) {
   $('#msg').textContent = '';
   carregando(true);
   try {
-    const resp = await fetch(`/api/rastreio?doc=${encodeURIComponent(doc)}&nf=${encodeURIComponent(nf)}`);
+    const resp = await fetch(`/api/rastreio?nf=${encodeURIComponent(nf)}`);
     const j = await resp.json();
     if (!resp.ok) { $('#res').replaceChildren(aviso(IC.alerta, 'Confira os dados', j.erro || 'Não foi possível consultar.')); return; }
     const achados = j.resultados.filter(r => r.status === 'encontrado');
@@ -308,7 +295,7 @@ async function buscar(doc, nf) {
     const out = [];
     if (achados.length) achados.forEach(r => out.push(cartaoResultado(r)));
     else out.push(aviso(IC.busca, 'Ainda não encontramos seu pedido',
-      'Confira o CPF/CNPJ e o número da nota. Se o pedido foi faturado há pouco tempo, a transportadora pode levar até 1 dia útil para registrar a coleta.'));
+      'Confira o número da nota fiscal. Se o pedido foi faturado há pouco tempo, a transportadora pode levar até 1 dia útil para registrar a coleta.'));
     if (falhas.length) out.push(el('p', { className: 'outras', textContent: 'Não conseguimos consultar agora: ' + falhas.map(r => NOMES[r.id] || r.nome).join(', ') + '. Tente novamente em alguns minutos.' }));
     $('#res').replaceChildren(...out);
     $('#res').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -317,11 +304,11 @@ async function buscar(doc, nf) {
   } finally { carregando(false); }
 }
 
-$('#f').addEventListener('submit', (e) => { e.preventDefault(); buscar($('#doc').value, $('#nf').value); });
+$('#f').addEventListener('submit', (e) => { e.preventDefault(); buscar($('#nf').value); });
 
-// Links prontos: /?doc=...&nf=...
+// Links prontos: /?nf=123456
 const p = new URLSearchParams(location.search);
-if (p.get('doc') && p.get('nf')) { $('#doc').value = p.get('doc'); $('#doc').dispatchEvent(new Event('input')); $('#nf').value = p.get('nf'); buscar(p.get('doc'), p.get('nf')); }
+if (p.get('nf')) { $('#nf').value = p.get('nf').replace(/\D/g, ''); buscar($('#nf').value); }
 </script>
 </body>
 </html>
