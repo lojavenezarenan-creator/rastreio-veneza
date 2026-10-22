@@ -265,8 +265,7 @@ function cartaoResultado(r) {
       el('ul', { className: 'linha' }, itens.map(i => el('li', {}, el('div', { className: 't', textContent: i.t }), i.m ? el('div', { className: 'm', textContent: i.m }) : null)))));
   });
   corpo.append(el('div', { className: 'rodape-res' },
-    el('span', { textContent: 'Consultado em ' + new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) }),
-    el('a', { href: r.link, target: '_blank', rel: 'noopener', textContent: 'Ver no site da transportadora ↗' })));
+    el('span', { textContent: 'Consultado em ' + new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) })));
   return el('section', { className: 'card res' }, topo, corpo);
 }
 
