@@ -236,10 +236,10 @@ function infoItem(t) {
 }
 
 // Não mostrar previsões (de chegada/entrega), só atualizações que já aconteceram
-const PREV = /previs|previst/i;
+const PREV = /\bprev(is[ãa]o|isao|ist[ao]s?|\.|\b)/i;
 // Eventos internos que não devem aparecer para o cliente
 const OCULTAR = /coleta solicitada/i;
-const semPrevisao = (t) => String(t || '').split(/(?<=\.)\s+/).filter(f => !PREV.test(f)).join(' ').trim();
+const semPrevisao = (t) => String(t || '').split(/(?<=[.!?])\s+(?=[A-ZÀ-Ú0-9])/).filter(f => !PREV.test(f)).join(' ').trim();
 
 function cartaoResultado(r) {
   const d = r.dados || {};

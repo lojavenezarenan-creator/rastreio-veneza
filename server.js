@@ -57,6 +57,30 @@ const semDadosPessoais = (r) => {
   return { ...r, dados: { ...r.dados, textos } };
 };
 
+// Remove qualquer previsão (de entrega/chegada): "Prev. entrega", "Previsão", "Previsto"...
+const PREV = /\bprev(is[ãa]o|isao|ist[ao]s?|\.|\b)/i;
+const semFrasePrev = (t) => String(t || '').split(/(?<=[.!?])\s+(?=[A-ZÀ-Ú0-9])/).filter((f) => !PREV.test(f)).join(' ').trim();
+function semPrevisao(r) {
+  if (!r.dados) return r;
+  const d = { ...r.dados };
+  d.textos = (d.textos || []).filter((t) => !PREV.test(t));
+  d.tabelas = (d.tabelas || []).map((tb) => {
+    const [cab, ...linhas] = tb.linhas;
+    const cols = cab.map((c, i) => (PREV.test(c) ? -1 : i)).filter((i) => i >= 0); // tira colunas de previsão
+    const pega = (l) => cols.map((i) => l[i] ?? '');
+    const corpo = linhas
+      .map((l) => pega(l).map(semFrasePrev))
+      .filter((l) => l.some((c) => c && !/^[\d#\s]*$/.test(c)));
+    return { ...tb, linhas: [pega(cab), ...corpo] };
+  }).filter((tb) => tb.linhas.length > 1);
+  d.resumo = semFrasePrev(d.resumo);
+  if (!d.resumo) { // usa a atualização mais recente
+    const l = d.tabelas[0] && d.tabelas[0].linhas[1];
+    if (l) d.resumo = l.reduce((a, b) => (String(b).length > String(a).length ? b : a), '');
+  }
+  return { ...r, dados: d };
+}
+
 app.get('/api/rastreio', limitar, async (req, res) => {
   const nf = soDigitos(req.query.nf);
   if (!nf || nf.length > 12) return res.status(400).json({ erro: 'Informe o número da nota fiscal.' });
@@ -72,7 +96,7 @@ app.get('/api/rastreio', limitar, async (req, res) => {
       for (const doc of LOJA_CNPJS) {
         try {
           const r = await t.rastrear(doc, nf);
-          if (r.status === 'encontrado') return semDadosPessoais({ ...base, ...r });
+          if (r.status === 'encontrado') return semPrevisao(semDadosPessoais({ ...base, ...r }));
           ultimo = r;
         } catch (e) {
           console.error(`[${t.id}]`, e.message);
