@@ -252,7 +252,7 @@ function cartaoResultado(r) {
   const ok = entregue(resumo);
   const topo = el('div', { className: 'res-topo' },
     el('div', { className: 'ic' + (ok ? '' : ' andamento') }, svg(ok ? IC.ok : IC.caminhao)),
-    el('div', {}, el('small', { textContent: 'Transportadora ' + (NOMES[r.id] || r.nome) }), el('h2', { textContent: resumo || 'Pedido localizado' })));
+    el('div', {}, el('small', { textContent: d.transportadora || ('Transportadora ' + (NOMES[r.id] || r.nome)) }), el('h2', { textContent: resumo || 'Pedido localizado' })));
 
   const corpo = el('div', { className: 'res-corpo' });
   const infos = textos.map(infoItem);

@@ -17,7 +17,7 @@ async function rastrear(doc, nf) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Referer: 'https://ssw.inf.br/2/rastreamento', Origin: 'https://ssw.inf.br' },
     });
     if (!r.ok) throw new Error(`SSW respondeu HTTP ${r.status}`);
-    return interpretar(await r.text(), nf);
+    return comDetalhes(interpretar(await r.text(), nf));
   }
   // Abre a página antes (pega cookie de sessão, como um navegador faria)
   const jar = {};
@@ -30,7 +30,56 @@ async function rastrear(doc, nf) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', Referer: URL_SSW, Origin: 'https://ssw.inf.br', Cookie: cookieHeader(jar) },
   });
   if (!res.ok) throw new Error(`SSW respondeu HTTP ${res.status}`);
-  return interpretar(await res.text(), nf);
+  return comDetalhes(interpretar(await res.text(), nf));
+}
+
+/** Busca o histórico completo ("Mais detalhes"). Se falhar, mantém a situação resumida. */
+async function comDetalhes(r) {
+  if (r.status !== 'encontrado' || !r.det) return limparDet(r);
+  try {
+    const res = await http(new URL(r.det, 'https://ssw.inf.br').toString(), { headers: { Referer: 'https://ssw.inf.br/2/rastreamento' } });
+    if (!res.ok) return limparDet(r);
+    const d = interpretarDetalhes(await res.text());
+    if (d.eventos.length) {
+      const ev = [...d.eventos].reverse(); // mais recente primeiro
+      r.dados.resumo = ev[0].texto;
+      r.dados.tabelas = [{ titulo: 'Histórico da entrega', linhas: [['Evento', 'Data e local'], ...ev.map((e) => [e.texto, e.meta])] }];
+      if (d.transportadora) r.dados.transportadora = d.transportadora;
+    }
+  } catch (e) {
+    console.error('[ssw detalhes]', e.message);
+  }
+  return limparDet(r);
+}
+const limparDet = (r) => { delete r.det; return r; };
+
+function interpretarDetalhes(html) {
+  const $ = cheerio.load(html);
+  $('script, style').remove();
+  $('br').replaceWith('\n');
+  $('p').each((_, p) => $(p).append('\n'));
+  const linhasDe = (el) => $(el).text().split('\n').map(limpa).filter(Boolean);
+  const eventos = [];
+  $('tr').each((_, tr) => {
+    const td = $(tr).children('td');
+    if (td.length < 3) return;
+    const data = linhasDe(td[0]);
+    if (!/^\d{2}\/\d{2}\/\d{2,4}$/.test(data[0] || '')) return;
+    const unidade = linhasDe(td[1]);
+    const titulo = limpa($(td[2]).find('.titulo').text()) || linhasDe(td[2])[0] || '';
+    const desc = linhasDe(td[2]).filter((t) => t !== titulo).join(' ');
+    const tituloBonito = titulo.charAt(0) + titulo.slice(1).toLowerCase();
+    eventos.push({
+      titulo: tituloBonito,
+      texto: desc ? `${tituloBonito}. ${desc}` : tituloBonito,
+      meta: [data.join(' '), unidade[0]].filter(Boolean).join(' · '),
+    });
+  });
+  let transportadora = '';
+  $('tr').each((_, tr) => {
+    if (/transportando a sua mercadoria/i.test($(tr).text())) transportadora = limpa($(tr).children('td').last().text());
+  });
+  return { eventos, transportadora };
 }
 
 const mesmoNumero = (a, b) => soDigitos(a) !== '' && Number(soDigitos(a)) === Number(soDigitos(b));
@@ -57,12 +106,16 @@ function interpretar(html, nf) {
       .replace(/CO2 emitido[^.]*\.\s*/gi, '')
       .trim();
     if (!situacao || /informa[çc][ãa]o n[ãa]o dispon/i.test(situacao + unidade.join(' '))) return;
-    linhas.push({ unidade, situacao });
+    // Link "Mais detalhes": opx('/2/ssw_SSWDetalhado?id=...&md=...')
+    const oc = ($(tr).attr('onclick') || '') + ' ' + $(tr).find('[onclick]').map((_, e) => $(e).attr('onclick')).get().join(' ');
+    const det = (oc.match(/opx\('([^']+)'\)/) || [])[1];
+    linhas.push({ unidade, situacao, det });
   });
 
   if (!linhas.length) return { status: 'nao_encontrado' };
 
   const atual = linhas[0];
+  const det = atual.det;
   const fim = atual.situacao.indexOf('.') > 0 ? atual.situacao.indexOf('.') + 1 : atual.situacao.length;
   const dados = {
     resumo: atual.situacao.slice(0, fim),
@@ -74,7 +127,7 @@ function interpretar(html, nf) {
       },
     ],
   };
-  return { status: 'encontrado', dados };
+  return { status: 'encontrado', dados, det };
 }
 
 module.exports = { id: 'ssw', nome: 'Transportadoras SSW', link: URL_SSW, rastrear, interpretar };
