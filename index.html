@@ -233,7 +233,7 @@ function botaoWhats(nf) {
 }
 function svgPeq() { const d = document.createElement('div'); d.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/><path d="M9 10h6M9 14h4"/></svg>`; return d.firstChild; }
 
-const NOMES = { ldb: 'LDB', movvi: 'Movvi', minuano: 'Minuano', ssw: 'SSW' };
+const NOMES = { ldb: 'LDB', movvi: 'Movvi', minuano: 'Minuano', ssw: 'SSW', postex: 'Postex Express' };
 const entregue = (t) => /entreg(a|ue)\s+realizad|mercadoria entregue|entregue/i.test(t || '');
 const ehData = (t) => /\d{2}\/\d{2}(\/\d{2,4})?/.test(t);
 

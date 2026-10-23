@@ -7,6 +7,7 @@ const TRANSPORTADORAS = [
   require('./movvi'),
   require('./minuano'),
   require('./ssw'),
+  require('./postex'),
 ];
 
 const app = express();
