@@ -244,7 +244,10 @@ function paraLinhaDoTempo(tb) {
   return linhas.map(l => {
     const cel = l.map((v, i) => ({ v, i })).filter(c => c.i !== iNum && c.v);
     if (!cel.length) return null;
-    const princ = cel.reduce((a, b) => (b.v.length > a.v.length ? b : a));
+    // texto principal = célula mais longa que NÃO seja só data/hora (ex.: "EM ROTA" x "03/09/2026 00:46")
+    const ehSoData = (t) => /^\s*\d{2}\/\d{2}(\/\d{2,4})?([\sT]+\d{2}:\d{2}(:\d{2})?)?\s*$/.test(t);
+    const candidatos = cel.filter((c) => !ehSoData(c.v));
+    const princ = (candidatos.length ? candidatos : cel).reduce((a, b) => (b.v.length > a.v.length ? b : a));
     const meta = cel.filter(c => c !== princ).map(c => c.v);
     return { t: princ.v, m: meta.join(' · ') };
   }).filter(Boolean);
