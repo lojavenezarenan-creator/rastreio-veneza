@@ -8,6 +8,7 @@ const TRANSPORTADORAS = [
   require('./minuano'),
   require('./ssw'),
   require('./postex'),
+  require('./totalexpress'),
 ];
 
 const app = express();
