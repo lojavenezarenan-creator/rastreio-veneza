@@ -124,11 +124,18 @@
   details p{margin:10px 0 0;color:var(--sub)}
 
   /* Rodapé */
-  footer{margin-top:56px;background:var(--roxo-esc);color:rgba(255,255,255,.85);padding:32px 0;font-size:.88rem}
+  footer{margin-top:56px;padding-bottom:80px !important;background:var(--roxo-esc);color:rgba(255,255,255,.85);padding:32px 0;font-size:.88rem}
   footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   footer strong{color:#fff;font-family:Quicksand,sans-serif;font-size:1.05rem}
   footer a{color:#ffb38f}
   footer p{margin:4px 0}
+  /* WhatsApp */
+  .whats{position:fixed;right:18px;bottom:18px;z-index:20;display:inline-flex;align-items:center;gap:10px;padding:13px 18px 13px 14px;border-radius:999px;background:#25d366;color:#fff;font-weight:700;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.18);transition:transform .15s}
+  .whats:hover{transform:translateY(-2px)}
+  .whats svg{width:24px;height:24px;flex:none}
+  @media (max-width:520px){.whats{right:14px;bottom:14px;padding:14px}.whats span{display:none}}
+  .btn-whats{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:10px 16px;border-radius:10px;background:#25d366;color:#fff;font-weight:700;text-decoration:none}
+  .btn-whats svg{width:18px;height:18px}
   .esconde{display:none !important}
 </style>
 </head>
@@ -181,6 +188,7 @@
     <details class="card"><summary>Não encontrei meu pedido. O que fazer?</summary><p>Confira se o número da nota está correto (somente números). Se a nota foi emitida há pouco tempo, a transportadora pode levar até 1 dia útil para registrar a coleta. Tente novamente mais tarde.</p></details>
     <details class="card"><summary>Onde encontro o número da nota fiscal?</summary><p>Ele está no e-mail enviado quando o pedido foi faturado e na nota fiscal (DANFE) que acompanha a mercadoria. Use apenas os números.</p></details>
     <details class="card"><summary>As informações são atualizadas em tempo real?</summary><p>Os dados vêm diretamente dos sistemas das transportadoras e são atualizados conforme elas registram cada etapa da entrega.</p></details>
+    <details class="card"><summary>Ainda tenho dúvidas. Como falo com a loja?</summary><p>Fale com a gente pelo WhatsApp: <a href="https://api.whatsapp.com/send?phone=551151926292" target="_blank" rel="noopener">clique aqui para abrir a conversa</a>. Se tiver, informe o número da nota fiscal para agilizar.</p></details>
     <details class="card"><summary>Esta página é segura?</summary><p>Sim. É a página oficial de rastreio da Loja Veneza e da Loja do Modulado. Nunca pedimos senhas, dados de cartão ou pagamentos aqui.</p></details>
   </section>
 </main>
@@ -196,6 +204,8 @@
   </div>
 </div></footer>
 
+<a class="whats" id="whats" href="https://api.whatsapp.com/send?phone=551151926292" target="_blank" rel="noopener" aria-label="Falar com a loja pelo WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/><path d="M9 10h6M9 14h4"/></svg><span>Dúvidas? Fale conosco</span></a>
+
 <script>
 const $ = (s) => document.querySelector(s);
 const el = (tag, props = {}, ...filhos) => { const e = document.createElement(tag); Object.assign(e, props); filhos.flat().forEach(f => f != null && f !== false && e.append(f)); return e; };
@@ -209,6 +219,19 @@ const IC = {
 
 // Máscaras
 $('#nf').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 12); });
+
+// WhatsApp: leva o número da nota na mensagem, quando houver
+const WHATS = 'https://api.whatsapp.com/send?phone=551151926292';
+function linkWhats(nf) {
+  const msg = nf ? `Olá! Tenho uma dúvida sobre a entrega do meu pedido (nota fiscal ${nf}).` : 'Olá! Tenho uma dúvida sobre a entrega do meu pedido.';
+  return WHATS + '&text=' + encodeURIComponent(msg);
+}
+function botaoWhats(nf) {
+  const a = el('a', { className: 'btn-whats', href: linkWhats(nf), target: '_blank', rel: 'noopener' });
+  a.append(svgPeq(), 'Falar com a loja no WhatsApp');
+  return a;
+}
+function svgPeq() { const d = document.createElement('div'); d.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/><path d="M9 10h6M9 14h4"/></svg>`; return d.firstChild; }
 
 const NOMES = { ldb: 'LDB', movvi: 'Movvi', minuano: 'Minuano', ssw: 'SSW' };
 const entregue = (t) => /entreg(a|ue)\s+realizad|mercadoria entregue|entregue/i.test(t || '');
@@ -296,6 +319,8 @@ async function buscar(nf) {
     else out.push(aviso(IC.busca, 'Ainda não encontramos seu pedido',
       'Confira o número da nota fiscal. Se o pedido foi faturado há pouco tempo, a transportadora pode levar até 1 dia útil para registrar a coleta.'));
     if (falhas.length) out.push(el('p', { className: 'outras', textContent: 'Não conseguimos consultar agora: ' + falhas.map(r => NOMES[r.id] || r.nome).join(', ') + '. Tente novamente em alguns minutos.' }));
+    if (!achados.length) out[0].querySelector('div:last-child').append(botaoWhats(nf));
+    $('#whats').href = linkWhats(nf);
     $('#res').replaceChildren(...out);
     $('#res').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch {
